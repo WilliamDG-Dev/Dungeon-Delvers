@@ -1,4 +1,5 @@
 using Unity.Netcode;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -10,13 +11,12 @@ public class PlayerNetwork : NetworkBehaviour
     private float moveSpeed = 3;
     private float jumpHeight = 5;
     
-    private float sensitivity = 100;
-    private float yaw;
-    private float pitch;
+    private float sensitivity = 1000;
+    private Vector3 spherePos;
+    private float offset = 1;
 
-    private float zoomDistance = 5f;
-    private float minZoom = 2f;
-    private float maxZoom = 10f;
+    private float yaw;
+
     private void Start()
     {
         if (!IsOwner)
@@ -31,6 +31,7 @@ public class PlayerNetwork : NetworkBehaviour
     private void Update()
     {
         if (!IsOwner) return;
+        spherePos = new Vector3(transform.position.x, transform.position.y + offset, transform.position.z);
         playerMove();
         CameraLogic();
     }
@@ -43,7 +44,26 @@ public class PlayerNetwork : NetworkBehaviour
         transform.position += transform.forward * vert * moveSpeed * Time.deltaTime;
         transform.position += transform.right * horiz * moveSpeed * Time.deltaTime;
 
-        if (Input.GetKeyDown(KeyCode.Space)) rb.AddForce(Vector3.up * jumpHeight, ForceMode.Impulse);
+        if (Input.GetKeyDown(KeyCode.Space) && Grounded()) rb.AddForce(Vector3.up * jumpHeight, ForceMode.Impulse);
+    }
+
+    private bool Grounded()
+    {
+        Collider[] colliders = Physics.OverlapSphere(spherePos, 1);
+
+        foreach (Collider collider in colliders)
+        {
+            if (collider.gameObject.tag == "Ground")
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.DrawWireSphere(spherePos, 1);
     }
 
     private void CameraLogic()
@@ -64,7 +84,6 @@ public class PlayerNetwork : NetworkBehaviour
             Cursor.lockState = CursorLockMode.None;
         }
 
-        //MouseZoom();
     }
 
     private void ResetMousePos()
@@ -83,18 +102,6 @@ public class PlayerNetwork : NetworkBehaviour
         float mouseY = Input.GetAxis("Mouse Y") * sensitivity * Time.deltaTime;
         
         yaw += mouseX;
-    }
-    private void MouseZoom()
-    {
-        float scroll = Input.mouseScrollDelta.y;
-
-        if (scroll != 0)
-        {
-            zoomDistance -= scroll * 2f;
-            zoomDistance = Mathf.Clamp(zoomDistance, minZoom, maxZoom);
-            Vector3 zoomDir = (cameraPivot.transform.up + -cameraPivot.transform.forward).normalized;
-            playerCamera.transform.position = zoomDir * zoomDistance;
-        }
     }
 
 }

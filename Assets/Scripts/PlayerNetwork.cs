@@ -5,46 +5,57 @@ using UnityEngine.InputSystem;
 
 public class PlayerNetwork : NetworkBehaviour
 {
-    [SerializeField] private GameObject cameraPivot;
-    [SerializeField] private GameObject playerCamera;
     [SerializeField] private Rigidbody rb;
+    private Transform cam;
     private float moveSpeed = 3;
     private float jumpHeight = 5;
     
-    private float sensitivity = 1000;
     private Vector3 spherePos;
     private float offset = 1;
-
-    private float yaw;
-
-    private void Start()
-    {
-        if (!IsOwner)
-        {
-            cameraPivot.SetActive(false);
-            return;
-        }
-
-
-    }
+    private float turnSmoothTime = 0.1f;
+    private float turnSmoothVelocity;
 
     private void Update()
     {
         if (!IsOwner) return;
-        spherePos = new Vector3(transform.position.x, transform.position.y + offset, transform.position.z);
+        UpdateDetails();
         playerMove();
-        CameraLogic();
     }
 
     private void playerMove()
     {
         float horiz = Input.GetAxisRaw("Horizontal");
         float vert = Input.GetAxisRaw("Vertical");
+        Vector3 direction = new Vector3(horiz, 0, vert).normalized;
 
-        transform.position += transform.forward * vert * moveSpeed * Time.deltaTime;
-        transform.position += transform.right * horiz * moveSpeed * Time.deltaTime;
+        if (direction.magnitude >= 0.1f)
+        {
+            float targetAngle = Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg + cam.eulerAngles.y;
+            float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSmoothVelocity, turnSmoothTime);
+            transform.rotation = Quaternion.Euler(0, angle, 0);
+
+            Vector3 moveDir = Quaternion.Euler(0, targetAngle, 0) * Vector3.forward;
+            transform.position += moveDir.normalized * moveSpeed * Time.deltaTime;
+        }
 
         if (Input.GetKeyDown(KeyCode.Space) && Grounded()) rb.AddForce(Vector3.up * jumpHeight, ForceMode.Impulse);
+    }
+
+    private void UpdateDetails()
+    {
+        spherePos = new Vector3(transform.position.x, transform.position.y + offset, transform.position.z);
+
+        if (cam == null)
+        {
+            try
+            {
+                cam = GameObject.FindGameObjectWithTag("MainCamera").transform;
+            }
+            catch
+            {
+                cam = null;
+            }
+        }
     }
 
     private bool Grounded()
@@ -65,43 +76,4 @@ public class PlayerNetwork : NetworkBehaviour
     {
         Gizmos.DrawWireSphere(spherePos, 1);
     }
-
-    private void CameraLogic()
-    {
-        ResetMousePos();
-        if (Input.GetMouseButton(2))
-        {
-            CameraRotate();
-            cameraPivot.transform.rotation = Quaternion.Euler(0, yaw, 0);
-        }
-        else if (Input.GetMouseButton(1))
-        {
-            CameraRotate();
-            transform.rotation = Quaternion.Euler(0, yaw, 0);
-        }
-        else
-        {
-            Cursor.lockState = CursorLockMode.None;
-        }
-
-    }
-
-    private void ResetMousePos()
-    {
-        if (Input.GetMouseButtonDown(1))
-        {
-            Quaternion currentPos = cameraPivot.transform.rotation;
-            cameraPivot.transform.rotation = transform.rotation;
-        }
-    }
-    private void CameraRotate()
-    {
-        Cursor.lockState = CursorLockMode.Locked;
-
-        float mouseX = Input.GetAxis("Mouse X") * sensitivity * Time.deltaTime;
-        float mouseY = Input.GetAxis("Mouse Y") * sensitivity * Time.deltaTime;
-        
-        yaw += mouseX;
-    }
-
 }

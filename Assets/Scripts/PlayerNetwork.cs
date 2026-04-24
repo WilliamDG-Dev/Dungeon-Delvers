@@ -40,8 +40,6 @@ public class PlayerNetwork : NetworkBehaviour
         float vert = Input.GetAxisRaw("Vertical");
         Vector3 direction = new Vector3(horiz, 0, vert).normalized;
 
-        Debug.Log(Grounded());
-
         if (Input.GetKeyDown(KeyCode.Space) && Grounded()) rb.AddForce(Vector3.up * jumpHeight, ForceMode.Impulse);
 
         if (direction.magnitude >= 0.1f)

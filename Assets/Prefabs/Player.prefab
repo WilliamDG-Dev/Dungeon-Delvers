@@ -312,10 +312,11 @@ GameObject:
   m_Component:
   - component: {fileID: 7252351764427365102}
   - component: {fileID: 5508230740285586855}
-  - component: {fileID: 8055531648896553447}
   - component: {fileID: 901887802051564767}
   - component: {fileID: 5513115385249599269}
   - component: {fileID: 149711391448609094}
+  - component: {fileID: 8055531648896553447}
+  - component: {fileID: 23843035275548992}
   m_Layer: 3
   m_Name: Player
   m_TagString: Player
@@ -356,7 +357,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 1400006366
+  GlobalObjectIdHash: 2685086590
   InScenePlacedSourceGlobalObjectIdHash: 2685086590
   DeferredDespawnTick: 0
   Ownership: 1
@@ -369,20 +370,6 @@ MonoBehaviour:
   AutoObjectParentSync: 1
   SyncOwnerTransformWhenParented: 1
   AllowOwnerToParent: 0
---- !u!114 &8055531648896553447
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4826672497077981018}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e854e5ce46816f04588be586c842f2d3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerNetwork
-  ShowTopMostFoldoutHeaderGroup: 1
-  rb: {fileID: 5513115385249599269}
 --- !u!114 &901887802051564767
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -473,6 +460,35 @@ MonoBehaviour:
   UseRigidBodyForMotion: 1
   AutoUpdateKinematicState: 1
   AutoSetKinematicOnDespawn: 1
+--- !u!114 &8055531648896553447
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4826672497077981018}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e854e5ce46816f04588be586c842f2d3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerNetwork
+  ShowTopMostFoldoutHeaderGroup: 1
+  rb: {fileID: 5513115385249599269}
+--- !u!114 &23843035275548992
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4826672497077981018}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a1c403a00e84cf24da6e7abbb4b9cb36, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerHealth
+  ShowTopMostFoldoutHeaderGroup: 1
+  startHealth: 100
+  currentHealth: 0
 --- !u!1 &5392252699336054942
 GameObject:
   m_ObjectHideFlags: 0

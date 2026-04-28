@@ -14,7 +14,6 @@ public class Enemy : NetworkBehaviour
     private float timeBetweenAttacks = 2;
 
     private int power;
-    private int maxPlayers = 5;
 
     private NavMeshAgent thisEnemy;
     private Animator anim;
@@ -22,17 +21,16 @@ public class Enemy : NetworkBehaviour
 
     private bool isAttacking = false;
 
-    private int targetPoint;
-
     private void Start()
     {
         thisEnemy = GetComponent<NavMeshAgent>();
         anim = GetComponent<Animator>();
-        targetPoint = Random.Range(0, patrolPoints.Length);
     }
 
     private void Update()
     {
+        if (!IsServer) return;
+        
         if (playerPos.Count == 0)
         {
             try
@@ -116,7 +114,7 @@ public class Enemy : NetworkBehaviour
 
         power = Random.Range(13, 17);
         
-        FindFirstObjectByType<PlayerHealth>().TakeDamage(power);
+        playerPos[0].GetComponent<PlayerHealth>().TakeDamage(power);
 
         anim.SetBool("Attacking", false);
         isAttacking = false;

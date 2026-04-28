@@ -1,6 +1,7 @@
 using NUnit.Framework;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.AI;
@@ -10,13 +11,14 @@ public class Enemy : NetworkBehaviour
     
     private float attackRange = 6;
     private float sightRange = 17.5f;
-    private float timeBetweenAttacks = 3;
+    private float timeBetweenAttacks = 2;
 
     private int power;
+    private int maxPlayers = 5;
 
     private NavMeshAgent thisEnemy;
     private Animator anim;
-    private Transform playerPos;
+    private List<GameObject> playerPos = new List<GameObject>();
 
     private bool isAttacking = false;
 
@@ -31,20 +33,24 @@ public class Enemy : NetworkBehaviour
 
     private void Update()
     {
-        if (playerPos == null)
+        if (playerPos.Count == 0)
         {
             try
             {
-                playerPos = FindFirstObjectByType<PlayerHealth>().transform;
+                playerPos = GameObject.FindGameObjectsWithTag("Player").OrderBy(player => DistanceToPlayer(player)).ToList();
             }
             catch
             {
-                playerPos = null;
+                playerPos.Clear();
             }
         }
+
         else
         {
-            float distanceFromPlayer = Vector3.Distance(playerPos.position, this.transform.position);
+            Debug.Log(playerPos.Count);
+            Debug.Log(playerPos[0].name);
+            
+            float distanceFromPlayer = DistanceToPlayer(playerPos[0]);
 
             if (distanceFromPlayer <= sightRange && distanceFromPlayer > attackRange && !PlayerHealth.isDead)
             {
@@ -76,6 +82,11 @@ public class Enemy : NetworkBehaviour
         }
     }
 
+    private float DistanceToPlayer(GameObject player)
+    {
+        return Vector3.Distance(player.transform.position, this.transform.position);
+    }
+
     private void Patrol()
     {   
         if (!thisEnemy.pathPending && thisEnemy.remainingDistance < 0.5f)
@@ -91,7 +102,7 @@ public class Enemy : NetworkBehaviour
     {
         anim.SetBool("Attacking", false);
         anim.SetBool("Walking", true);
-        thisEnemy.SetDestination(playerPos.position);
+        thisEnemy.SetDestination(playerPos[0].transform.position);
     }
 
     private IEnumerator AttackPlayer()

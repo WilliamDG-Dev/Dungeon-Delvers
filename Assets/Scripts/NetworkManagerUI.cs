@@ -13,10 +13,10 @@ using UnityEngine.UI;
 public class NetworkManagerUI : MonoBehaviour
 {
     [SerializeField] private Relay relay;
-
     [SerializeField] private TMP_InputField enterlobbyName;
     [SerializeField] private Button hostLobbyBtn;
     [SerializeField] private Button leaveLobbyBtn;
+    [SerializeField] private GameObject playerHealthBar;
     [SerializeField] private List<GameObject> lobbyButtonList = new List<GameObject>();
 
     private void Awake()
@@ -28,8 +28,8 @@ public class NetworkManagerUI : MonoBehaviour
         for (int index = 0; index < lobbyButtonList.Count; index++)
         {
             int capturedIndex = index;
-            
-            lobbyButtonList[index].GetComponentInChildren<TextMeshProUGUI>().text = "";
+
+            LobbyButtonText(index).text = "";
             lobbyButtonList[index].GetComponent<Button>().onClick.AddListener(() =>
             {
                 try
@@ -72,14 +72,19 @@ public class NetworkManagerUI : MonoBehaviour
             {
                 try
                 {
-                    lobbyButtonList[index].GetComponentInChildren<TextMeshProUGUI>().text = relay.lobbyDetailsList[index];
+                    LobbyButtonText(index).text = relay.lobbyDetailsList[index];
                 }
                 catch
                 {
-                    lobbyButtonList[index].GetComponentInChildren<TextMeshProUGUI>().text = "";
+                    LobbyButtonText(index).text = "";
                 }
             }
         }
+    }
+
+    private TextMeshProUGUI LobbyButtonText(int index)
+    {
+        return lobbyButtonList[index].GetComponentInChildren<TextMeshProUGUI>();
     }
 
     private void UIVisibility(bool visible)
@@ -90,6 +95,9 @@ public class NetworkManagerUI : MonoBehaviour
         {
             element.gameObject.SetActive(visible);
         }
+        leaveLobbyBtn.gameObject.SetActive(!visible);
+        playerHealthBar.gameObject.SetActive(!visible);
+        
     }
 }
 

@@ -19,7 +19,9 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class Relay : MonoBehaviour
-{  
+{
+    [HideInInspector] public int maxPlayers = 5;
+    
     private Lobby hostLobby;
     private Lobby joinedLobby;
     private float heartbeatTimer = 15;
@@ -86,7 +88,7 @@ public class Relay : MonoBehaviour
                     {KEY_START_GAME, new DataObject(DataObject.VisibilityOptions.Public, "0") }
                 }
             };
-            Lobby lobby = await LobbyService.Instance.CreateLobbyAsync(lobbyName, 5, CreateLobbyOptions);
+            Lobby lobby = await LobbyService.Instance.CreateLobbyAsync(lobbyName, maxPlayers, CreateLobbyOptions);
 
             hostLobby = lobby;
             joinedLobby = lobby;
@@ -124,7 +126,7 @@ public class Relay : MonoBehaviour
     {
         try
         {
-            Allocation allocation = await RelayService.Instance.CreateAllocationAsync(4);
+            Allocation allocation = await RelayService.Instance.CreateAllocationAsync(maxPlayers - 1);
             string joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
 
             NetworkManager.Singleton.GetComponent<UnityTransport>().SetHostRelayData(

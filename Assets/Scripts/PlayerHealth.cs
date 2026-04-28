@@ -1,10 +1,12 @@
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class PlayerHealth : NetworkBehaviour
 {
-    [SerializeField] private int startHealth = 100;
-    [SerializeField] private int currentHealth;
+    private Slider healthBar;
+    private int startHealth = 100;
+    private int currentHealth;
 
     public static bool isDead;
 
@@ -12,14 +14,15 @@ public class PlayerHealth : NetworkBehaviour
     void Start()
     {
         if (!IsOwner) return;
+        healthBar = GameObject.Find("Health").GetComponentInChildren<Slider>();
         currentHealth = startHealth;
+        healthBar.maxValue = startHealth;
+        healthBar.value = currentHealth;
     }
 
     void Update()
     {
         if (!IsOwner) return;
-
-        Debug.Log(currentHealth);
 
         if (currentHealth <= 0 && !isDead)
         {
@@ -31,5 +34,6 @@ public class PlayerHealth : NetworkBehaviour
     public void TakeDamage(int amount)
     {
         currentHealth -= amount;
+        healthBar.value = currentHealth;
     }
 }

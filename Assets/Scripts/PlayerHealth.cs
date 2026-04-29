@@ -6,25 +6,41 @@ public class PlayerHealth : NetworkBehaviour
 {
     private Slider healthBar;
     private int startHealth = 100;
-    private int currentHealth;
+    private NetworkVariable<int> currentHealth = new NetworkVariable<int>();
 
-    public static bool isDead;
+    public bool isDead;
 
 
-    void Start()
+    public override void OnNetworkSpawn()
     {
-        if (!IsOwner) return;
-        healthBar = GameObject.Find("Health").GetComponentInChildren<Slider>();
-        currentHealth = startHealth;
-        healthBar.maxValue = startHealth;
-        healthBar.value = currentHealth;
+        if (IsServer)
+        {
+            currentHealth.Value = startHealth;
+        }
+
+        if (IsOwner)
+        {
+            healthBar = GameObject.Find("Health").GetComponentInChildren<Slider>();
+            healthBar.maxValue = startHealth;
+
+            currentHealth.OnValueChanged += OnHealthChanged;
+            healthBar.value = currentHealth.Value;
+        }
+    }
+
+    private void OnHealthChanged(int oldValue, int newValue)
+    {
+        if (IsOwner && healthBar != null)
+        {
+            healthBar.value = newValue;
+        }
     }
 
     void Update()
     {
         if (!IsOwner) return;
 
-        if (currentHealth <= 0 && !isDead)
+        if (currentHealth.Value <= 0 && !isDead)
         {
             isDead = true;
             Debug.Log("The player has died!");
@@ -33,7 +49,8 @@ public class PlayerHealth : NetworkBehaviour
 
     public void TakeDamage(int amount)
     {
-        currentHealth -= amount;
-        healthBar.value = currentHealth;
+        if (!IsServer) return;
+
+        currentHealth.Value -= amount;
     }
 }

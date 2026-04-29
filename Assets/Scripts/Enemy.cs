@@ -5,13 +5,14 @@ using System.Linq;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.AI;
+
 public class Enemy : NetworkBehaviour
 {
     [SerializeField] private Transform[] patrolPoints;
-    
+
     private float attackRange = 6;
     private float sightRange = 17.5f;
-    private float timeBetweenAttacks = 2;
+    private float timeBetweenAttacks = 2.633f;
 
     private int power;
 
@@ -19,7 +20,7 @@ public class Enemy : NetworkBehaviour
     private Animator anim;
     private List<GameObject> playerPos = new List<GameObject>();
 
-    private bool isAttacking = false;
+    private float attackTimer = 0;
 
     private void Start()
     {
@@ -30,54 +31,68 @@ public class Enemy : NetworkBehaviour
     private void Update()
     {
         if (!IsServer) return;
-        
+
+        try
+        {
+            playerPos = NetworkManager.Singleton.ConnectedClientsList
+                .Select(client => client.PlayerObject.gameObject)
+                .OrderBy(player => DistanceToPlayer(player))
+                .ToList();
+        }
+        catch
+        {
+            playerPos.Clear();
+        }
+
         if (playerPos.Count == 0)
+            return;
+
+        Debug.Log(playerPos.Count);
+        Debug.Log(playerPos[0].name);
+
+        float distanceFromPlayer = DistanceToPlayer(playerPos[0]);
+
+        if (PlayerDead())
         {
-            try
-            {
-                playerPos = GameObject.FindGameObjectsWithTag("Player").OrderBy(player => DistanceToPlayer(player)).ToList();
-            }
-            catch
-            {
-                playerPos.Clear();
-            }
+            thisEnemy.isStopped = true;
+            return;
         }
 
-        else
+        // CHASE
+        if (distanceFromPlayer <= sightRange && distanceFromPlayer > attackRange)
         {
-            Debug.Log(playerPos.Count);
-            Debug.Log(playerPos[0].name);
-            
-            float distanceFromPlayer = DistanceToPlayer(playerPos[0]);
+            attackTimer = 0;
 
-            if (distanceFromPlayer <= sightRange && distanceFromPlayer > attackRange && !PlayerHealth.isDead)
+            ChasePlayer();
+        }
+
+        // PATROL
+        else if (distanceFromPlayer > sightRange)
+        {
+            attackTimer = 0;
+
+            Patrol();
+        }
+
+        // ATTACK
+        else if (distanceFromPlayer <= attackRange)
+        {
+            thisEnemy.isStopped = true;
+
+            HandleAttackTimer();
+
+            if (attackTimer <= 0f)
             {
-                isAttacking = false;
-                thisEnemy.isStopped = false;
-                StopAllCoroutines();
-
-                ChasePlayer();
-            }
-            
-            else if (distanceFromPlayer > sightRange && distanceFromPlayer > attackRange && !PlayerHealth.isDead)
-            {
-                isAttacking = false;
-                anim.SetBool("Attacking", false);
-
-                Patrol();
-            }
-
-            else if (distanceFromPlayer <= attackRange && !isAttacking && !PlayerHealth.isDead)
-            {
-                thisEnemy.isStopped = true;
-                StartCoroutine(AttackPlayer());
-            }
-
-            else if (PlayerHealth.isDead)
-            {
-                thisEnemy.isStopped = true;
+                TryAttack();
+                attackTimer = timeBetweenAttacks;       
             }
         }
+    }
+
+    private bool PlayerDead()
+    {
+        PlayerHealth health = playerPos[0].GetComponent<PlayerHealth>();
+        return health != null && health.isDead;
     }
 
     private float DistanceToPlayer(GameObject player)
@@ -86,11 +101,12 @@ public class Enemy : NetworkBehaviour
     }
 
     private void Patrol()
-    {   
+    {
         if (!thisEnemy.pathPending && thisEnemy.remainingDistance < 0.5f)
         {
             thisEnemy.isStopped = false;
             anim.SetBool("Walking", true);
+
             int point = Random.Range(0, patrolPoints.Length);
             thisEnemy.SetDestination(patrolPoints[point].position);
         }
@@ -98,27 +114,32 @@ public class Enemy : NetworkBehaviour
 
     private void ChasePlayer()
     {
-        anim.SetBool("Attacking", false);
         anim.SetBool("Walking", true);
+
+        thisEnemy.isStopped = false;
         thisEnemy.SetDestination(playerPos[0].transform.position);
     }
 
-    private IEnumerator AttackPlayer()
+    private void HandleAttackTimer()
     {
-        isAttacking = true;
-
-        anim.SetBool("Walking", false);
-        anim.SetBool("Attacking", true);
-
-        yield return new WaitForSeconds(timeBetweenAttacks);
-
-        power = Random.Range(13, 17);
-        
-        playerPos[0].GetComponent<PlayerHealth>().TakeDamage(power);
-
-        anim.SetBool("Attacking", false);
-        isAttacking = false;
+        if (attackTimer > 0f)
+        {
+            attackTimer -= Time.deltaTime;
+        }
     }
+
+    private void TryAttack()
+    {
+        anim.SetBool("Walking", false);
+        anim.SetTrigger("Attacking");
+
+        if (playerPos.Count > 0 && DistanceToPlayer(playerPos[0]) <= attackRange)
+        {
+            power = Random.Range(13, 17);
+            playerPos[0].GetComponent<PlayerHealth>().TakeDamage(power);
+        }
+    }
+
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.cyan;
